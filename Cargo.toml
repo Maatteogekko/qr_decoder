@@ -1,0 +1,12 @@
+[package]
+name = "qr_decoder"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+pdfium-render = { version = "0.8", features = ["image"] }
+rxing = "0.6.1"
+clap = { version = "4.5.20", features = ["derive"] }
+image = "0.25.2"
