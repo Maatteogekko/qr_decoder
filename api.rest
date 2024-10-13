@@ -8,7 +8,7 @@ Content-Disposition: form-data; name="json"
 Content-Type: application/json
 
 {  
-    # available formats. They are case sensitive. No formats specified is the same specifying all of them.
+    # available formats. They are case sensitive. No formats specified is the same as specifying all of them.
     "formats": [
         "AZTEC",
         "CODABAR",
