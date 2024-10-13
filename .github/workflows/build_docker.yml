@@ -18,12 +18,14 @@ jobs:
 
     - name: Download PDFium binaries
       run: |
+        mkdir -p $HOME/lib/pdfium
         curl -LO https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F6721/pdfium-linux-x64.tgz
-        mkdir -p /usr/local/lib/pdfium
-        tar -xvzf pdfium-linux-x64.tgz -C /usr/local/lib/pdfium
+        tar -xvzf pdfium-linux-x64.tgz -C $HOME/lib/pdfium
+        ls -l $HOME/lib/pdfium  # Verify that libpdfium.so exists
 
     - name: Build Docker image
-      run: docker build . -t qr_decoder:latest
+      run: |
+        docker build . --build-arg PDFIUM_LIB_PATH=$HOME/lib/pdfium -t qr_decoder:latest
 
     - name: Save Docker image as a tar file
       run: docker save qr_decoder:latest -o qr_decoder.tar
@@ -34,9 +36,6 @@ jobs:
       with:
         tag_name: ${{ github.sha }}
         release_name: QR Decoder Release ${{ github.sha }}
-        draft: false
-        prerelease: false
-        generate_release_notes: true
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload Docker image to GitHub release
