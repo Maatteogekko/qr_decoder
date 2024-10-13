@@ -5,6 +5,13 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "qr_decoder"
+path = "src/main.rs"
+
 [dependencies]
 pdfium-render = { version = "0.8.24", features = ["image"] }
 rxing = { version = "0.6.1", features = ["serde"] }
@@ -17,3 +24,4 @@ actix-multipart = "0.7.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+parse-size = "1.1.0"

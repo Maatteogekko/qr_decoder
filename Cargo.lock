@@ -1991,6 +1991,7 @@ dependencies = [
  "clap",
  "image",
  "infer",
+ "parse-size",
  "pdfium-render",
  "rayon",
  "rxing",

@@ -1,0 +1,7 @@
+.git/
+.vscode/
+.gitignore
+target/
+Dockerfile
+libpdfium.dylib
+README.md

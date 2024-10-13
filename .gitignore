@@ -3,4 +3,5 @@
 
 /target
 
-libpdfium.dylib
+*.so
+*.dylib
