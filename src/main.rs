@@ -1,5 +1,4 @@
 use std::{
-    borrow::BorrowMut,
     collections::{HashMap, HashSet},
     path::Path,
 };
@@ -9,11 +8,11 @@ use image::{DynamicImage, EncodableLayout};
 use pdfium_render::prelude::*;
 use rxing::{BarcodeFormat, DecodeHintType, DecodeHintValue};
 
-/// Simple CLI to extract QR codes from a PDF file
+/// Simple CLI to extract QR codes from a PDF or image file
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Input PDF file
+    /// Input file
     #[arg(short, long)]
     input: String,
     /// List of barcode formats to detect
@@ -21,57 +20,74 @@ struct Args {
     formats: Option<Vec<BarcodeFormat>>,
 }
 
-fn main() {
+fn main() -> Result<(), String> {
     let args = Args::parse();
 
     // TODO JSON output
     // TODO web server
     // TODO docker
 
-    let hints = args.formats.map(|formats| {
-        HashMap::from([(
-            DecodeHintType::POSSIBLE_FORMATS,
-            DecodeHintValue::PossibleFormats(HashSet::from_iter(formats.iter().cloned())),
-        )])
-    });
+    let mut hints = create_hints(args.formats);
 
-    for image in get_images(&args.input) {
+    for image in get_images(&args.input)? {
         let width = image.width();
         let height = image.height();
         let luma_image: Vec<u8> = image.into_luma8().as_bytes().into();
 
-        if let Ok(results) = hints.clone().map_or(
-            rxing::helpers::detect_multiple_in_luma(luma_image.clone(), width, height),
-            |mut hints| {
-                rxing::helpers::detect_multiple_in_luma_with_hints(
-                    luma_image,
-                    width,
-                    height,
-                    hints.borrow_mut(),
-                )
-            },
-        ) {
-            for result in results {
-                println!("{} -> {}", result.getBarcodeFormat(), result.getText())
+        let results = match &mut hints {
+            Some(hints) => rxing::helpers::detect_multiple_in_luma_with_hints(
+                luma_image.clone(),
+                width,
+                height,
+                hints,
+            ),
+            None => rxing::helpers::detect_multiple_in_luma(luma_image, width, height),
+        };
+
+        match results {
+            Ok(results) => {
+                for result in results {
+                    println!("{} -> {}", result.getBarcodeFormat(), result.getText());
+                }
             }
+            Err(e) => eprintln!("Error decoding barcodes: {}", e),
         }
     }
+
+    Ok(())
 }
 
-fn get_images(path: &impl AsRef<Path>) -> Vec<DynamicImage> {
-    let kind = infer::get_from_path(path)
-        .expect("file read successfully")
-        .expect("file type is known");
+/// Creates barcode detection hints from the given formats.
+fn create_hints(
+    formats: Option<Vec<BarcodeFormat>>,
+) -> Option<HashMap<DecodeHintType, DecodeHintValue>> {
+    formats.map(|formats| {
+        HashMap::from([(
+            DecodeHintType::POSSIBLE_FORMATS,
+            DecodeHintValue::PossibleFormats(HashSet::from_iter(formats)),
+        )])
+    })
+}
+
+/// Gets images from the provided file path, handling different formats.
+fn get_images(path: &impl AsRef<Path>) -> Result<Vec<DynamicImage>, String> {
+    let kind = infer::get_from_path(path).map_err(|_| "Failed to read file".to_string())?;
+    let kind = kind.ok_or_else(|| "Unknown file type".to_string())?;
 
     match kind.mime_type() {
-        "application/pdf" => extract_images(path).expect("extracted images"),
-        "image/jpeg" | "image/png" | "image/gif" | "image/webp" | "image/tiff" | "image/bmp" => {
-            vec![image::open(path).expect("file read successfully")]
+        "application/pdf" => {
+            extract_images(path).map_err(|e| format!("Failed to extract images from PDF: {:?}", e))
         }
-        filetype => panic!("Unexpected file type, {filetype}"),
+        "image/jpeg" | "image/png" | "image/gif" | "image/webp" | "image/tiff" | "image/bmp" => {
+            image::open(path)
+                .map(|img| vec![img])
+                .map_err(|e| format!("Failed to read image: {}", e))
+        }
+        filetype => Err(format!("Unexpected file type: {filetype}")),
     }
 }
 
+/// Extracts images from a PDF file using the pdfium library.
 fn extract_images(path: &impl AsRef<Path>) -> Result<Vec<DynamicImage>, PdfiumError> {
     let pdfium = Pdfium::default();
     let render_config = PdfRenderConfig::new()
