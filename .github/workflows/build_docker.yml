@@ -21,10 +21,10 @@ jobs:
         mkdir -p $HOME/lib/pdfium
         curl -LO https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F6721/pdfium-linux-x64.tgz
         tar -xvzf pdfium-linux-x64.tgz -C $HOME/lib/pdfium
-        ls -l $HOME/lib/pdfium  # Verify that libpdfium.so exists
 
     - name: Build Docker image
       run: |
+        pwd
         docker build . --build-arg PDFIUM_LIB_PATH=$HOME/lib/pdfium -t qr_decoder:latest
 
     - name: Save Docker image as a tar file
