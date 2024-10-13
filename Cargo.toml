@@ -11,3 +11,4 @@ rxing = "0.6.1"
 clap = { version = "4.5.20", features = ["derive"] }
 image = "0.25.2"
 infer = "0.16.0"
+rayon = "1.10.0"

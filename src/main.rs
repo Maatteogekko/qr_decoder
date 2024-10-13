@@ -6,6 +6,7 @@ use std::{
 use clap::Parser;
 use image::{DynamicImage, EncodableLayout};
 use pdfium_render::prelude::*;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rxing::{BarcodeFormat, DecodeHintType, DecodeHintValue};
 
 /// Simple CLI to extract QR codes from a PDF or image file
@@ -15,7 +16,29 @@ struct Args {
     /// Input file
     #[arg(short, long)]
     input: String,
-    /// List of barcode formats to detect
+    /// Comma separated list of barcode formats to detect.
+    /// Supported values are:
+    /// - AZTEC
+    /// - CODABAR
+    /// - CODE_39
+    /// - CODE_93
+    /// - CODE_128
+    /// - DATA_MATRIX
+    /// - EAN_8
+    /// - EAN_13
+    /// - ITF
+    /// - MAXICODE
+    /// - PDF_417
+    /// - QR_CODE
+    /// - MICRO_QR_CODE
+    /// - RECTANGULAR_MICRO_QR_CODE
+    /// - RSS_14
+    /// - RSS_EXPANDED
+    /// - TELEPEN
+    /// - UPC_A
+    /// - UPC_E
+    /// - UPC_EAN_EXTENSION
+    /// - DXFilmEdge
     #[arg(short, long, value_delimiter = ',')]
     formats: Option<Vec<BarcodeFormat>>,
 }
@@ -27,20 +50,17 @@ fn main() -> Result<(), String> {
     // TODO web server
     // TODO docker
 
-    let mut hints = create_hints(args.formats);
+    let hints = create_hints(args.formats);
 
-    for image in get_images(&args.input)? {
+    get_images(&args.input)?.par_iter().for_each(|image| {
         let width = image.width();
         let height = image.height();
-        let luma_image: Vec<u8> = image.into_luma8().as_bytes().into();
+        let luma_image: Vec<u8> = image.clone().into_luma8().as_bytes().into();
 
-        let results = match &mut hints {
-            Some(hints) => rxing::helpers::detect_multiple_in_luma_with_hints(
-                luma_image.clone(),
-                width,
-                height,
-                hints,
-            ),
+        let results = match &mut hints.clone() {
+            Some(hints) => {
+                rxing::helpers::detect_multiple_in_luma_with_hints(luma_image, width, height, hints)
+            }
             None => rxing::helpers::detect_multiple_in_luma(luma_image, width, height),
         };
 
@@ -52,7 +72,7 @@ fn main() -> Result<(), String> {
             }
             Err(e) => eprintln!("Error decoding barcodes: {}", e),
         }
-    }
+    });
 
     Ok(())
 }
