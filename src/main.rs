@@ -13,7 +13,7 @@ struct Config {
 struct UploadForm {
     #[multipart(limit = "20MB")]
     file: TempFile,
-    json: MPJson<Config>,
+    json: Option<MPJson<Config>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -32,7 +32,9 @@ async fn main() -> std::io::Result<()> {
 #[post("/scanner/scan")]
 async fn scan_file(MultipartForm(form): MultipartForm<UploadForm>) -> impl Responder {
     let file_path = form.file.file.path();
-    let hints = create_hints(form.json.formats.clone());
+    let hints = form
+        .json
+        .and_then(|some| create_hints(some.formats.clone()));
 
     match process_file(file_path, hints).await {
         Ok(barcodes) => HttpResponse::Ok().json(barcodes),
