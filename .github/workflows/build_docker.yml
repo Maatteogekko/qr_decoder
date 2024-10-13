@@ -18,9 +18,8 @@ jobs:
 
     - name: Download PDFium binaries
       run: |
-        mkdir -p $HOME/lib/pdfium
         curl -LO https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F6721/pdfium-linux-x64.tgz
-        tar -xvzf pdfium-linux-x64.tgz -C $HOME/lib/pdfium
+        tar -xvzf pdfium-linux-x64.tgz -C ${{ github.workspace }}
 
     - name: Build Docker image
       run: |
