@@ -1,0 +1,47 @@
+name: Build and Release Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Download PDFium binaries
+      run: |
+        curl -LO https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F6721/pdfium-linux-x64.tgz
+        tar -xvzf pdfium-linux-x64.tgz -C /usr/local/lib
+
+    - name: Build Docker image
+      run: docker build . -t qr_decoder:latest
+
+    - name: Save Docker image as a tar file
+      run: docker save qr_decoder:latest -o qr_decoder.tar
+
+    - name: Create GitHub release
+      id: create_release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ github.sha }}
+        release_name: QR Decoder Release ${{ github.sha }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload Docker image to GitHub release
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./qr_decoder.tar
+        asset_name: qr_decoder_${{ github.sha }}.tar
+        asset_content_type: application/x-tar
