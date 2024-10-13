@@ -1,0 +1,43 @@
+# @name scan_file
+# @prompt file_path File to upload for scan
+POST http://localhost:8080/scanner/scan HTTP/1.1
+Content-Type: multipart/form-data; boundary=X
+
+--X
+Content-Disposition: form-data; name="json"
+Content-Type: application/json
+
+{  
+    # available formats. They are case sensitive. No formats specified is the same specifying all of them.
+    "formats": [
+        "AZTEC",
+        "CODABAR",
+        "CODE_39",
+        "CODE_93",
+        "CODE_128",
+        "DATA_MATRIX",
+        "EAN_8",
+        "EAN_13",
+        "ITF",
+        "MAXICODE",
+        "PDF_417",
+        "QR_CODE",
+        "MICRO_QR_CODE",
+        "RECTANGULAR_MICRO_QR_CODE",
+        "RSS_14",
+        "RSS_EXPANDED",
+        "TELEPEN",
+        "UPC_A",
+        "UPC_E",
+        "UPC_EAN_EXTENSION",
+        "DXFilmEdge"
+    ]
+}
+
+--X
+Content-Disposition: form-data; name="file"; filename="{{file_path}}"
+
+< {{file_path}}
+--X--
+
+###

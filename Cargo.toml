@@ -7,8 +7,13 @@ edition = "2021"
 
 [dependencies]
 pdfium-render = { version = "0.8.24", features = ["image"] }
-rxing = "0.6.1"
+rxing = { version = "0.6.1", features = ["serde"] }
 clap = { version = "4.5.20", features = ["derive"] }
 image = "0.25.2"
 infer = "0.16.0"
 rayon = "1.10.0"
+actix-web = "4.9.0"
+actix-multipart = "0.7.2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
