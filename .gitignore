@@ -1,4 +1,6 @@
-/target
 .DS_Store
-libpdfium.dylib
 .vscode
+
+/target
+
+libpdfium.dylib
