@@ -10,29 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
 
-    - name: Download PDFium binaries
-      run: |
-        curl -LO https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F6721/pdfium-linux-x64.tgz
-        mkdir $HOME/pdfium
-        tar -xvzf pdfium-linux-x64.tgz -C $HOME/pdfium
-        mv $HOME/pdfium/lib/libpdfium.so libpdfium.so
+      - name: Build Docker image
+        run: |
+          docker build --platform=linux/amd64 . -t qr_decoder:latest
 
-    - name: Build Docker image
-      run: |
-        docker build . -t qr_decoder:latest
+      - name: Save Docker image as a tar file
+        run: docker save qr_decoder:latest -o qr_decoder.tar
 
-    - name: Save Docker image as a tar file
-      run: docker save qr_decoder:latest -o qr_decoder.tar
-
-    - name: Create GitHub release
-      id: create_release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: qr_decoder.tar
-        generate_release_notes: true
+      - name: Create GitHub release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: qr_decoder.tar
+          generate_release_notes: true
