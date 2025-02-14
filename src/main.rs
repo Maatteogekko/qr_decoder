@@ -36,7 +36,7 @@ async fn scan_file(MultipartForm(form): MultipartForm<UploadForm>) -> impl Respo
         .json
         .and_then(|some| create_hints(some.formats.clone()));
 
-    match process_file(file_path, hints).await {
+    match process_file(file_path, hints) {
         Ok(barcodes) => HttpResponse::Ok().json(barcodes),
         Err(e) => HttpResponse::InternalServerError().json(ErrorResponse {
             message: e.to_string(),

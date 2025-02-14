@@ -18,7 +18,7 @@ pub struct BarcodeData {
 }
 
 /// Process the file and extract barcodes.
-pub async fn process_file(
+pub fn process_file(
     path: &Path,
     hints: Option<DecodingHintDictionary>,
 ) -> Result<Vec<BarcodeData>, String> {
