@@ -24,5 +24,5 @@ FROM debian:bookworm-slim AS runtime
 WORKDIR /app
 COPY --from=builder /app/target/release/qr_decoder qr_decoder
 COPY --from=builder /app/libpdfium.so libpdfium.so
-EXPOSE 8080
+EXPOSE 8000
 ENTRYPOINT ["./qr_decoder"]

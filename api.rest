@@ -1,6 +1,6 @@
 # @name scan_file
 # @prompt file_path File to upload for scan
-POST http://localhost:8080/scanner/scan HTTP/1.1
+POST http://localhost:8000/scanner/scan HTTP/1.1
 Content-Type: multipart/form-data; boundary=X
 
 --X

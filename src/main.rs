@@ -24,7 +24,7 @@ struct ErrorResponse {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(move || App::new().service(scan_file))
-        .bind(("0.0.0.0", 8080))?
+        .bind(("0.0.0.0", 8000))?
         .run()
         .await
 }
