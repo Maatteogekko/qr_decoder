@@ -23,7 +23,7 @@ struct ErrorResponse {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(move || App::new().service(scan_file))
+    HttpServer::new(move || App::new().service(scan_file).service(health_check))
         .bind(("0.0.0.0", 8000))?
         .run()
         .await
