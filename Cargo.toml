@@ -13,10 +13,10 @@ name = "qr_decoder"
 path = "src/main.rs"
 
 [dependencies]
-pdfium-render = { version = "0.8.24", features = ["image"] }
-rxing = { version = "0.6.1", features = ["serde"] }
-clap = { version = "4.5.20", features = ["derive"] }
-image = "0.25.2"
+pdfium-render = { version = "0.8.31", features = ["image"] }
+rxing = { version = "0.6.6", features = ["serde"] }
+clap = { version = "4.5.37", features = ["derive"] }
+image = "0.25.6"
 infer = "0.16.0"
 rayon = "1.10.0"
 actix-web = "4.9.0"

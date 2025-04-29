@@ -14,7 +14,7 @@ COPY --from=planner /app/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 RUN cargo build --release --bin qr_decoder
-RUN curl -LO https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F6721/pdfium-linux-x64.tgz &&\ 
+RUN curl -LO https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F7149/pdfium-linux-x64.tgz &&\ 
     mkdir $HOME/pdfium &&\
     tar -xvzf pdfium-linux-x64.tgz -C $HOME/pdfium &&\ 
     mv $HOME/pdfium/lib/libpdfium.so libpdfium.so
