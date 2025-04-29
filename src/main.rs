@@ -1,5 +1,5 @@
 use actix_multipart::form::{json::Json as MPJson, tempfile::TempFile, MultipartForm};
-use actix_web::{post, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 use qr_decoder::{create_hints, process_file};
 use rxing::BarcodeFormat;
 use serde::{Deserialize, Serialize};
@@ -42,4 +42,9 @@ async fn scan_file(MultipartForm(form): MultipartForm<UploadForm>) -> impl Respo
             message: e.to_string(),
         }),
     }
+}
+
+#[get("/alive")]
+async fn health_check() -> impl Responder {
+    HttpResponse::Ok()
 }
