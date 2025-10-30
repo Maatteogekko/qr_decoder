@@ -100,14 +100,20 @@ fn get_images(path: &impl AsRef<Path>) -> Result<Vec<DynamicImage>, String> {
 /// Extracts images from a PDF file using the pdfium library.
 fn extract_images(path: &impl AsRef<Path>) -> Result<Vec<DynamicImage>, PdfiumError> {
     let pdfium = Pdfium::default();
-    let render_config = PdfRenderConfig::new()
-        .set_target_width(1000)
-        .set_maximum_height(1000)
-        .rotate_if_landscape(PdfPageRenderRotation::Degrees90, true);
-
     let document = pdfium.load_pdf_from_file(path, None)?;
-    let mut images: Vec<DynamicImage> = Vec::new();
+
+    let dpi: f32 = 144.0;
+
+    let mut images = Vec::new();
     for page in document.pages().iter() {
+        let w_px = ((page.width() / 72.0) * dpi).value.ceil() as i32;
+        let h_px = ((page.height() / 72.0) * dpi).value.ceil() as i32;
+
+        let render_config = PdfRenderConfig::new()
+            .set_target_width(w_px)
+            .set_target_height(h_px)
+            .rotate_if_landscape(PdfPageRenderRotation::Degrees90, true);
+
         images.push(page.render_with_config(&render_config)?.as_image());
     }
 
