@@ -1921,7 +1921,7 @@ dependencies = [
 
 [[package]]
 name = "qr_decoder"
-version = "1.2.0"
+version = "1.2.1"
 dependencies = [
  "actix-multipart",
  "actix-web",
