@@ -32,9 +32,7 @@ async fn main() -> std::io::Result<()> {
 #[post("/scanner/scan")]
 async fn scan_file(MultipartForm(form): MultipartForm<UploadForm>) -> impl Responder {
     let file_path = form.file.file.path();
-    let hints = form
-        .json
-        .and_then(|some| create_hints(some.formats.clone()));
+    let hints = form.json.map(|some| create_hints(some.formats.clone()));
 
     match process_file(file_path, hints) {
         Ok(barcodes) => HttpResponse::Ok().json(barcodes),

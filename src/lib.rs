@@ -57,13 +57,17 @@ pub fn process_file(
 /// Creates barcode detection hints from the given formats.
 pub fn create_hints(
     formats: Option<Vec<BarcodeFormat>>,
-) -> Option<HashMap<DecodeHintType, DecodeHintValue>> {
-    formats.map(|formats| {
-        HashMap::from([(
+) -> HashMap<DecodeHintType, DecodeHintValue> {
+    let mut hints = HashMap::from([(DecodeHintType::TRY_HARDER, DecodeHintValue::TryHarder(true))]);
+
+    if let Some(formats) = formats {
+        hints.insert(
             DecodeHintType::POSSIBLE_FORMATS,
             DecodeHintValue::PossibleFormats(HashSet::from_iter(formats)),
-        )])
-    })
+        );
+    }
+
+    hints
 }
 
 /// Gets images from the provided file path, handling different formats.
