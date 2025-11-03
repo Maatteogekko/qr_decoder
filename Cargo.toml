@@ -1,6 +1,6 @@
 [package]
 name = "qr_decoder"
-version = "1.2.1"
+version = "1.3.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,15 +13,18 @@ name = "qr_decoder"
 path = "src/main.rs"
 
 [dependencies]
-pdfium-render = { version = "0.8.31", features = ["image"] }
-rxing = { version = "0.6.6", features = ["serde"] }
-clap = { version = "4.5.37", features = ["derive"] }
-image = "0.25.6"
-infer = "0.16.0"
-rayon = "1.10.0"
-actix-web = "4.9.0"
-actix-multipart = "0.7.2"
+pdfium-render = { version = "0.8", features = ["image"] }
+rxing = { version = "0.6", features = ["serde"] }
+clap = { version = "4.5", features = ["derive"] }
+image = "0.25"
+infer = "0.16"
+rayon = "1.10"
+actix-web = "4.9"
+actix-multipart = "0.7"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-parse-size = "1.1.0"
+parse-size = "1.1"
+regex = "1.12"
+scraper = "0.24"
+chrono = "0.4"

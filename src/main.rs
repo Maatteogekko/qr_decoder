@@ -35,10 +35,8 @@ async fn scan_file(MultipartForm(form): MultipartForm<UploadForm>) -> impl Respo
     let hints = create_hints(form.json.and_then(|some| some.formats.clone()));
 
     match process_file(file_path, Some(hints)) {
-        Ok(barcodes) => HttpResponse::Ok().json(barcodes),
-        Err(e) => HttpResponse::InternalServerError().json(ErrorResponse {
-            message: e.to_string(),
-        }),
+        Ok(result) => HttpResponse::Ok().json(result),
+        Err(e) => HttpResponse::InternalServerError().json(ErrorResponse { message: e }),
     }
 }
 

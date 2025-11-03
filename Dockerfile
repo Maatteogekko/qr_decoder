@@ -22,6 +22,7 @@ RUN curl -LO https://github.com/bblanchon/pdfium-binaries/releases/download/chro
 # Stage 4: Use a newer Debian runtime with updated glibc
 FROM debian:bookworm-slim AS runtime
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends mupdf-tools && rm -rf /var/lib/apt/lists/*
 COPY --from=builder /app/target/release/qr_decoder qr_decoder
 COPY --from=builder /app/libpdfium.so libpdfium.so
 EXPOSE 8000
