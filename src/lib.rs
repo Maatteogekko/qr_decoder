@@ -17,11 +17,6 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-#[derive(Debug, Serialize)]
-pub struct ScanResult {
-    pub barcodes: Vec<BarcodeData>,
-}
-
 #[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct BarcodeData {
     r#type: String,
@@ -67,7 +62,7 @@ pub fn create_hints(
 pub fn process_file(
     path: &Path,
     hints: Option<DecodingHintDictionary>,
-) -> Result<ScanResult, String> {
+) -> Result<Vec<BarcodeData>, String> {
     let mut barcodes = scan_barcodes(path, hints)?;
 
     let mime = infer::get_from_path(path)
@@ -91,7 +86,7 @@ pub fn process_file(
     enrich_barcodes_with_dates(&mut barcodes, &dates_and_codes);
 
     barcodes.sort();
-    Ok(ScanResult { barcodes })
+    Ok(barcodes)
 }
 
 /// Process the file and extract barcodes.
