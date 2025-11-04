@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, Utc};
+use chrono::NaiveDate;
 use image::{DynamicImage, EncodableLayout, ImageFormat};
 use pdfium_render::prelude::*;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -9,11 +9,12 @@ use serde::Serialize;
 use std::{
     cmp::Ordering,
     collections::{HashMap, HashSet},
-    fs::File,
+    fs::{self, File},
     io::Read,
     path::Path,
     process::Command,
     sync::{Arc, Mutex},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 #[derive(Debug, Serialize)]
@@ -21,12 +22,29 @@ pub struct ScanResult {
     pub barcodes: Vec<BarcodeData>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Eq, PartialEq)]
 pub struct BarcodeData {
     r#type: String,
     data: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    date: Option<String>,
+    date: Option<NaiveDate>,
+}
+
+impl Ord for BarcodeData {
+    fn cmp(&self, other: &Self) -> Ordering {
+        (self.date.is_none(), self.date, &self.r#type, &self.data).cmp(&(
+            other.date.is_none(),
+            other.date,
+            &other.r#type,
+            &other.data,
+        ))
+    }
+}
+
+impl PartialOrd for BarcodeData {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 /// Creates barcode detection hints from the given formats.
@@ -61,7 +79,10 @@ pub fn process_file(
     let dates_and_codes = if mime == "application/pdf" {
         match run_mutool_to_html(path) {
             Ok(html) => extract_dates_and_codes_from_html(&html),
-            Err(_) => Vec::new(),
+            Err(e) => {
+                println!("Error: {}", e);
+                Vec::new()
+            }
         }
     } else {
         Vec::new()
@@ -69,6 +90,7 @@ pub fn process_file(
 
     enrich_barcodes_with_dates(&mut barcodes, &dates_and_codes);
 
+    barcodes.sort();
     Ok(ScanResult { barcodes })
 }
 
@@ -160,7 +182,7 @@ fn extract_images(path: &impl AsRef<Path>) -> Result<Vec<DynamicImage>, PdfiumEr
 
 #[derive(Debug, Serialize, Clone)]
 struct DateCodePair {
-    date: String,
+    date: NaiveDate,
     code: String,
 }
 
@@ -354,34 +376,51 @@ fn process_pages(html_text: &str) -> Vec<(String, String)> {
     all_pairs
 }
 
-pub fn run_mutool_to_html(path: &Path) -> Result<String, String> {
-    let output = Command::new("mutool")
-        .args(["convert", "-F", "html", "-o", "-", &path.to_string_lossy()])
+fn run_mutool_to_html(path: &Path) -> Result<String, String> {
+    let ts = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|_| "clock error".to_string())?
+        .as_nanos();
+    let out_path = std::env::temp_dir().join(format!("mutool-{}.html", ts));
+    let out_str = out_path.to_string_lossy().into_owned();
+
+    let status = Command::new("mutool")
+        .args([
+            "convert",
+            "-F",
+            "html",
+            "-o",
+            &out_str,
+            &path.to_string_lossy(),
+        ])
         .output()
         .map_err(|_| "Error: 'mutool' not found in PATH.".to_string())?;
 
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    if !status.status.success() {
+        let stderr = String::from_utf8_lossy(&status.stderr).to_string();
         return Err(format!(
             "mutool failed (exit {}): {}",
-            output.status.code().unwrap_or(-1),
+            status.status.code().unwrap_or(-1),
             stderr
         ));
     }
-    String::from_utf8(output.stdout).map_err(|_| "mutool produced non-UTF8 output".to_string())
+
+    let html = fs::read_to_string(&out_path)
+        .map_err(|e| format!("failed to read mutool output '{}': {}", out_str, e))?;
+
+    let _ = fs::remove_file(&out_path);
+    Ok(html)
 }
 
-fn parse_date_to_iso(s: &str) -> Option<String> {
-    let date = NaiveDate::parse_from_str(s.trim(), "%d/%m/%Y").ok()?;
-    let dt = DateTime::<Utc>::from_naive_utc_and_offset(date.and_hms_opt(0, 0, 0)?, Utc);
-    Some(dt.to_rfc3339())
+fn parse_date(s: &str) -> Option<NaiveDate> {
+    NaiveDate::parse_from_str(s.trim(), "%d/%m/%Y").ok()
 }
 
 fn extract_dates_and_codes_from_html(html_text: &str) -> Vec<DateCodePair> {
     process_pages(html_text)
         .into_iter()
         .filter_map(|(date_str, code)| {
-            parse_date_to_iso(&date_str).map(|iso| DateCodePair {
+            parse_date(&date_str).map(|iso| DateCodePair {
                 date: iso,
                 code: clean_text(&code),
             })
@@ -399,15 +438,12 @@ fn pagopa_qr_code_from_payload(payload: &str) -> Option<String> {
 }
 
 fn enrich_barcodes_with_dates(barcodes: &mut [BarcodeData], pairs: &[DateCodePair]) {
-    let map: HashMap<String, String> = pairs
-        .iter()
-        .map(|p| (p.code.clone(), p.date.clone()))
-        .collect();
+    let map: HashMap<String, NaiveDate> = pairs.iter().map(|p| (p.code.clone(), p.date)).collect();
 
     for b in barcodes.iter_mut() {
         if let Some(code) = pagopa_qr_code_from_payload(&b.data) {
-            if let Some(date_iso) = map.get(&code) {
-                b.date = Some(date_iso.clone());
+            if let Some(date) = map.get(&code) {
+                b.date = Some(*date);
             }
         }
     }
