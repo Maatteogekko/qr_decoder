@@ -61,7 +61,10 @@ pub fn process_file(
     let dates_and_codes = if mime == "application/pdf" {
         match run_mutool_to_html(path) {
             Ok(html) => extract_dates_and_codes_from_html(&html),
-            Err(_) => Vec::new(),
+            Err(e) => {
+                println!("Error: {}", e);
+                Vec::new()
+            }
         }
     } else {
         Vec::new()
